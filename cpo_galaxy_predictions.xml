@@ -1,0 +1,53 @@
+<tool id="cpo_prediction_parser" name="cpo_prediction_parser" version="0.1.0">
+  <description>This tool combines outputs from MLST, ResFinder, PlasmidFinder, Mobsuite, RGI into a TSV for the cpo_prediction workflow</description>
+  <requirements>
+		<requirement type="package" version="0.23.4">pandas</requirement>
+		<requirement type="package" version="3.6">python</requirement>
+	</requirements>
+	<command detect_errors="exit_code">
+    <![CDATA[
+	    python '$__tool_directory__/cpo_galaxy_prediction.py'
+		'-i $contig.element_identifier'
+		'-m $mlst'
+		'-c $mobsuitecontig'
+		'-f $mobsuiteaggregate'
+		'-a $resfinder'
+		'-r $rgi'
+		'-e $expected'
+		'-s $__tool_directory__/databases/scheme_species_map.tab'
+		'-p $plasmidfinder'
+		'-d $mash'
+    ]]>
+	</command>
+    <inputs>
+        <param type="data" name="contig"/>
+        <param type="data" name="mlst" format="tabular" />
+        <param type="data" name="mobsuitecontig" format="tabular" />
+        <param type="data" name="mobsuiteaggregate" format="tabular" />
+        <param type="data" name="resfinder" format="tabular" />
+        <param type="data" name="rgi" format="tabular" />
+        <param type="data" name="plasmidfinder" format="tabular" />
+        <param type="data" name="mash" format ="tabular"/>
+        <param type="text" name="expected" optional ="false"/>
+    </inputs>
+    <outputs>
+        <data name="tsvSummary" format="tabular" from_work_dir="summary.tsv"/>
+        <data name="tsvSummaryExistingFormat" format="tabular" from_work_dir="summary.linda.tsv"/>
+		<data name="txtSummary" format="txt" from_work_dir="summary.txt"/>
+    </outputs>
+	<help>
+		This tool combines outputs from MLST, ResFinder, PlasmidFinder, Mobsuite, RGI into a TSV for the cpo_prediction workflow into a json and tsv summary file.
+		Required input: -i contigs, -m mlst result, -c output1 (contig report) from mobsuite, -f output 4(aggregate report) from mobsuite, -a resfinder result on cpo database, -r rgi result, -e expected species, -s mlst scheme file map (exist within databse folder), -p plasmidfinder result, -d mash result on bcplasmid database.
+	</help>
+	<citations>
+        <citation type="bibtex">
+@misc{cpo,
+  author = {j, j},
+  year = {2018},
+  title = {cpo_prediction},
+  publisher = {j},
+  journal = {j of j},
+  url = {https://bfjia.net,
+}</citation>
+    </citations>
+</tool>

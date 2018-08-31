@@ -1,0 +1,31 @@
+<tool id="cpo_snippy_dist" name="cpo_snippy_dist" version="0.6">
+  <description>modified snippy-dist v0.6 to the tree drawer of the cpo_predictions workflow</description>
+  <requirements>
+        <requirement type="package" version="0.6">snp-dists</requirement>
+    </requirements>
+    <command detect_errors="exit_code">
+      <![CDATA[ 
+      snp-dists $input > distance.tab    
+      ]]></command>
+
+    <inputs>
+        <param type="data" name="input" format="fasta" />
+    </inputs>
+    <outputs>
+		<data name="distance.tab" format="tabular" from_work_dir="distance.tab"/>
+    </outputs>
+    <help>
+		runs snippy-dist on the output from snippy-core
+	</help>
+	<citations>
+	<citation type="bibtex">
+@misc{cpo,
+  author = {j, j},
+  year = {2018},
+  title = {cpo_prediction},
+  publisher = {j},
+  journal = {j of j},
+  url = {https://bfjia.net,
+}</citation>
+    </citations>
+</tool>

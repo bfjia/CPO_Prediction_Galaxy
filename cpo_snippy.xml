@@ -1,0 +1,163 @@
+<tool id="cpo_snippy" name="CPO_Snippy" version="3.2">
+  <description>Modified Snippy v3.2 to support contig inputs for the cpo_prediction workflow</description>
+  <requirements>
+    <requirement type="package" version="3.2">snippy</requirement>
+  </requirements>
+  <stdio>
+    <exit_code range="1:" />
+  </stdio>
+
+  <command>
+    <![CDATA[
+      snippy
+      --outdir out
+      --cpus "\${GALAXY_SLOTS:-1}"
+      --ref $ref
+      $cleanup
+      #if str( $advanced.is_advanced ) == "advanced"
+        --mapqual $advanced.mapqual
+        --mincov $advanced.mincov
+        --minfrac $advanced.minfrac
+        #if $advanced.rgid
+          --rgid $advanced.rgid
+        #end if
+        #if $advanced.bwaopt
+          --bwaopt $advanced.bwaopt
+        #end if
+      #end if
+      --ctgs $input
+
+      &&
+
+      gunzip out/snps.depth.gz
+
+      &&
+
+      #import re
+      #set $dir_name = ($input.element_identifier)
+      mkdir -p ${dir_name}/reference && cp out/snps.tab out/snps.aligned.fa ${dir_name}/ && cp out/reference/ref.fa ${dir_name}/reference/ &&
+
+      tar -czf out.tgz ${dir_name}
+
+
+    ]]>
+  </command>
+  <inputs>
+
+    <param name="ref" type="data" format="fasta" label="Reference Fasta" />
+    <param name="input" type="data" format="fasta" label="assembled contigs"/>
+    <param name="cleanup" type="boolean" checked="true" truevalue="--cleanup" falsevalue="" label="Cleanup the non-snp output files" help="Remove all non-SNP files: BAMs, indices etc" />
+    <conditional name="advanced">
+      <param name="is_advanced" type="select" label="Advanced parameters" help="unhide advanced parameter settings">
+        <option value="advanced">Show advanced settings</option>
+        <option value="simple" selected="true">Hide advanced settings</option>
+      </param>
+      <when value="advanced">
+        <param name="mapqual" type="float" value="60" label="Minimum mapping quality" help="Minimum mapping quality to allow" />
+        <param name="mincov" type="float" value="10" label="Minimum coverage" help="Minimum coverage to call a snp" />
+        <param name="minfrac" type="float" value="0.9" label="Minumum proportion for variant evidence" help="Minumum proportion for variant evidence" />
+        <param name="rgid" type="text" value="" label="Bam header @RG ID" help="Use this @RG ID: in the BAM header" />
+        <param name="bwaopt" type="text" value="" label="Extra BWA MEM options" help="Extra BWA MEM options, eg. -x pacbio" />
+      </when>
+      <when value="simple">
+
+      </when>
+    </conditional>
+  </inputs>
+  <outputs>
+    <data format="vcf" name="snpvcf" label="${tool.name} on ${on_string} snps vcf file" from_work_dir="out/snps.vcf"/>
+    <data format="gff3" name="snpgff" label="${tool.name} on ${on_string} snps gff file" from_work_dir="out/snps.gff"/>
+    <data format="tabular" name="snptab" label="${tool.name} on ${on_string} snps table" from_work_dir="out/snps.tab"/>
+    <data format="tabular" name="snpsum" label="${tool.name} on ${on_string} snps summary" from_work_dir="out/snps.txt"/>
+    <data format="txt" name="snplog" label="${tool.name} on ${on_string} log file" from_work_dir="out/snps.log"/>
+    <data format="fasta" name="snpalign" label="${tool.name} on ${on_string} aligned fasta" from_work_dir="out/snps.aligned.fa"/>
+    <data format="fasta" name="snpconsensus" label="${tool.name} on ${on_string} consensus fasta" from_work_dir="out/snps.consensus.fa"/>
+    <data format="tabular" name="snpsdepth" label="${tool.name} on ${on_string} mapping depth" from_work_dir="out/snps.depth"/>
+    <data format="bam" name="snpsbam" label="${tool.name} on ${on_string} mapped reads (bam)" from_work_dir="out/snps.bam">
+      <filter>cleanup is False</filter>
+    </data>
+    <data format="zip" name="outdir" label="${tool.name} on ${on_string} out dir" from_work_dir="out.tgz" />
+  </outputs>
+
+  <tests>
+    <test>
+      <param name="ref_type_selector" value="fasta" />
+      <param name="ref" value="Ecoli.fna" ftype="fasta" />
+      <param name="fastq_input_selector" value="paired" />
+      <param name="fastq_input1" ftype="fastq" value="reads_1.fq" />
+      <param name="fastq_input2" ftype="fastq" value="reads_2.fq" />
+      <output name="snpsum" ftype="tabular" file="test/snps.txt" lines-diff="5" />
+    </test>
+  </tests>
+
+
+  <help>
+    <![CDATA[
+Synopsis:
+  snippy 3.0 - fast bacterial variant calling from NGS reads
+
+Author:
+  Torsten Seemann <torsten.seemann@gmail.com>
+
+Usage:
+  snippy [options] --outdir <dir> --ref <ref> --pe1 <R1.fq.gz> --pe2 <R2.fq.gz>
+
+  snippy [options] --outdir <dir> --ref <ref> --se <454.fastq>
+
+  snippy [options] --outdir <dir> --ref <ref> --peil <velvet.fa.gz>
+
+Options:
+  --help            This help
+
+  --version         Print version and exit
+
+  --citation        Print citation for referencing snippy
+
+  --quiet           No screen output (default OFF)
+
+  --cpus [N]        Maximum number of CPU cores to use (default '8')
+
+  --reference [X]   Reference genome. Supports FASTA, GenBank, EMBL (not GFF) (default '')
+
+  --outdir [X]      Output folder (default '')
+
+  --prefix [X]      Prefix for output files (default 'snps')
+
+  --force           Force overwrite of existing output folder (default OFF)
+
+  --pe1|R1|left [X] Reads, paired-end R1 (left) (default '')
+
+  --pe2|R2|right [X] Reads, paired-end R2 (right) (default '')
+
+  --se|single [X]   Single-end reads (default '')
+
+  --peil [X]        Reads, paired-end R1/R2 interleaved (default '')
+
+  --mapqual [n.n]   Minimum mapping quality to allow (default '60')
+
+  --mincov [N]      Minimum coverage of variant site (default '10')
+
+  --minfrac [n.n]   Minumum proportion for variant evidence (default '0.9')
+
+  --report          Produce long report with visual alignment (slow) (default OFF)
+
+  --cleanup         Remove all non-SNP files: BAMs, indices etc (default OFF)
+
+  --rgid [X]        Use this @RG ID: in the BAM header (default '')
+
+  --bwaopt [X]      Extra BWA MEM options, eg. -x pacbio (default '')
+
+    ]]>
+  </help>
+  <citations>
+    <citation type="bibtex">
+      @UNPUBLISHED{Seemann2013,
+      author = "Seemann T",
+      title = "snippy: fast bacterial variant calling from NGS reads",
+      year = "2015",
+      note = "https://github.com/tseemann/snippy"}
+    </citation>
+  </citations>
+
+
+</tool>

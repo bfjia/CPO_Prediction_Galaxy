@@ -1,0 +1,31 @@
+<tool id="cpo_clustalw" name="cpo_clustalw" version="2.1">
+  <description>Modified version of clustalw2 v2.1 to produce NJ trees from an SNIPPY produced alignment</description>
+  <requirements>
+     <requirement type="package" version="2.1">clustalw</requirement>
+  </requirements>   
+  <command detect_errors="exit_code">
+  <![CDATA[  
+    clustalw2 -tree -infile=$input && mv `ls $input | cut -d$'.' -f 1`.ph ./result.ph
+  ]]>  
+  </command>
+  <inputs>
+    <param name="input" type="data" format="fasta" label="Input" help="FASTA file with contig(s)"/>
+  </inputs>
+  <outputs>
+    <data name="phylip" format="txt" from_work_dir="result.ph"/> 
+  </outputs>
+  <help>
+    clustalw2 -tree -infile=$input -outputtree=nj
+  </help>
+  <citations>
+    <citation type="bibtex">
+  @misc{githubmob-suite,
+  author = {Robertson J, Nash J},
+  title = {MOB-Suite: Software tools for clustering, reconstruction and typing of plasmids from draft assemblies.},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  doi = {10.1099/mgen.0.000206},
+  url = {https://github.com/phac-nml/mob-suite}
+    }</citation>
+  </citations>
+</tool>
